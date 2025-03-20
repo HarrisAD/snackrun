@@ -10,8 +10,7 @@ export class GameState {
         this.gameOver = false;
         this.levelComplete = false;
         this.currentLevel = 1;
-        this.lives = 3;
-        this.maxLives = 3;
+        this.inTransition = false; // Add flag to track transitions
         this.player = {
             x: 400,
             y: 500,
@@ -42,6 +41,7 @@ export class GameState {
         this.platforms = [];
         this.score = 0;
         this.totalCoins = 0;
+        this.levelCoinReward = 5; // Default coin reward for level completion
         
         // Store canvas dimensions for easy access
         this.canvasWidth = canvas.width;
@@ -60,28 +60,7 @@ export class GameState {
         this.player.speedX = 0;
         this.player.speedY = 0;
         this.player.color = '#e74c3c';
-    }
-    
-    // Reset the entire game (complete restart)
-    fullReset() {
-        this.reset();
-        this.score = 0;
-        this.totalCoins = 0;
-        this.lives = 3;
-        this.currentLevel = 1;
-        // Reset player upgrades to initial values
-        this.player.jumpPower = 550;
-        this.player.moveSpeed = 300;
-    }
-    
-    // Lose a life
-    loseLife() {
-        this.lives--;
-        console.log(`Lost a life! Lives remaining: ${this.lives}`);
-        
-        if (this.lives <= 0) {
-            console.log("Out of lives!");
-        }
+        this.inTransition = false; // Reset transition flag
     }
     
     // Award coins for level completion

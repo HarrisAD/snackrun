@@ -3,9 +3,11 @@ import { loadLevel } from './levels.js';
 import { toggleShop, handleShopClick, shopState } from './shop.js';
 import { toggleTutorial, uiState, addNotification } from './ui.js';
 import { resetLevelCountdown } from './renderer.js';
+import { startNewLevel } from './game.js';
 
 // Track if the game is paused
 let gamePaused = false;
+let gameInitialized = false;
 
 // Handler for keydown events
 export function handleKeyDown(e) {
@@ -15,10 +17,12 @@ export function handleKeyDown(e) {
     // Handle tutorial closing with any key
     if (uiState.showTutorial) {
         toggleTutorial();
-        // Only start the game after tutorial is closed if we're at level 1
-        if (gameState.currentLevel === 1) {
-            loadLevel(1);
-            resetLevelCountdown();
+        
+        // Only initialize the game after tutorial is closed if we haven't yet
+        if (!gameInitialized) {
+            console.log("Initializing game after tutorial closed");
+            gameInitialized = true;
+            startNewLevel(1);
         }
         return;
     }
@@ -86,10 +90,11 @@ export function handleKeyDown(e) {
         case '1':
         case '2':
         case '3':
+        case '4':
+        case '5':
             const levelNum = parseInt(e.key);
             if (levelNum > 0) {
-                loadLevel(levelNum);
-                resetLevelCountdown();
+                startNewLevel(levelNum);
                 addNotification(`Jumped to Level ${levelNum}`);
             }
             break;
@@ -132,10 +137,12 @@ export function handleClick(e) {
     // Handle tutorial closing with click
     if (uiState.showTutorial) {
         toggleTutorial();
-        // Only start the game after tutorial is closed if we're at level 1
-        if (window.gameState.currentLevel === 1) {
-            loadLevel(1);
-            resetLevelCountdown();
+        
+        // Only initialize the game after tutorial is closed if we haven't yet
+        if (!gameInitialized) {
+            console.log("Initializing game after tutorial closed");
+            gameInitialized = true;
+            startNewLevel(1);
         }
         return;
     }
@@ -223,6 +230,5 @@ export function completeGameReset() {
     uiState.notifications = [];
     
     // Load the first level
-    loadLevel(1);
-    resetLevelCountdown();
+    startNewLevel(1);
 }
