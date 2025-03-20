@@ -17,13 +17,24 @@ window.onload = function() {
         fps: 0,
         frameCount: 0,
         lastFpsUpdate: 0,
-        circle: {
+        gravity: 980, // pixels per second squared
+        player: {
             x: 400,
-            y: 300,
-            radius: 30,
-            color: '#3498db',
-            speedX: 200, // pixels per second
-            speedY: 150  // pixels per second
+            y: 500,
+            width: 40,
+            height: 60,
+            speedX: 0,
+            speedY: 0,
+            moveSpeed: 300, // pixels per second
+            jumpPower: 550, // initial jump velocity
+            color: '#e74c3c',
+            isJumping: false,
+            isOnGround: true
+        },
+        keys: {
+            left: false,
+            right: false,
+            up: false
         }
     };
 
@@ -50,54 +61,144 @@ window.onload = function() {
         }
     }
 
-    // Get a random color
-    function getRandomColor() {
-        const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'];
-        return colors[Math.floor(Math.random() * colors.length)];
-    }
-
-    // Update circle position
-    function updateCircle(deltaTime) {
-        const circle = gameState.circle;
+    // Draw the player
+    function drawPlayer() {
+        const player = gameState.player;
         
-        // Move the circle
-        circle.x += circle.speedX * deltaTime;
-        circle.y += circle.speedY * deltaTime;
+        // Draw the player body (rectangle)
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x - player.width/2, player.y - player.height, player.width, player.height);
         
-        // Bounce off left and right walls
-        if (circle.x - circle.radius < 0) {
-            circle.x = circle.radius;
-            circle.speedX = Math.abs(circle.speedX);
-            circle.color = getRandomColor();
-        } else if (circle.x + circle.radius > canvas.width) {
-            circle.x = canvas.width - circle.radius;
-            circle.speedX = -Math.abs(circle.speedX);
-            circle.color = getRandomColor();
-        }
-        
-        // Bounce off top and bottom walls
-        if (circle.y - circle.radius < 0) {
-            circle.y = circle.radius;
-            circle.speedY = Math.abs(circle.speedY);
-            circle.color = getRandomColor();
-        } else if (circle.y + circle.radius > canvas.height) {
-            circle.y = canvas.height - circle.radius;
-            circle.speedY = -Math.abs(circle.speedY);
-            circle.color = getRandomColor();
-        }
-    }
-
-    // Draw the circle
-    function drawCircle() {
-        const circle = gameState.circle;
-        
-        ctx.beginPath();
-        ctx.arc(circle.x, circle.y, circle.radius, 0, Math.PI * 2);
-        ctx.fillStyle = circle.color;
-        ctx.fill();
+        // Draw outline
         ctx.strokeStyle = '#2c3e50';
         ctx.lineWidth = 2;
+        ctx.strokeRect(player.x - player.width/2, player.y - player.height, player.width, player.height);
+        
+        // Draw eyes (to indicate direction)
+        const eyeSize = 6;
+        ctx.fillStyle = 'white';
+        ctx.fillRect(player.x - player.width/4 - eyeSize/2, player.y - player.height * 0.7 - eyeSize/2, eyeSize, eyeSize);
+        ctx.fillRect(player.x + player.width/4 - eyeSize/2, player.y - player.height * 0.7 - eyeSize/2, eyeSize, eyeSize);
+        
+        // Draw mouth
+        ctx.beginPath();
+        ctx.moveTo(player.x - player.width/4, player.y - player.height * 0.4);
+        ctx.lineTo(player.x + player.width/4, player.y - player.height * 0.4);
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
         ctx.stroke();
+        
+        // Draw jumping indicator (if jumping)
+        if (gameState.player.isJumping) {
+            ctx.beginPath();
+            ctx.moveTo(player.x, player.y);
+            ctx.lineTo(player.x, player.y + 10);
+            ctx.strokeStyle = 'yellow';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+
+    // Update player position and state
+    function updatePlayer(deltaTime) {
+        const player = gameState.player;
+        const keys = gameState.keys;
+        
+        // Apply horizontal movement based on key presses
+        if (keys.left) {
+            player.speedX = -player.moveSpeed;
+        } else if (keys.right) {
+            player.speedX = player.moveSpeed;
+        } else {
+            // Gradual slow down when no keys are pressed
+            player.speedX *= 0.8;
+            if (Math.abs(player.speedX) < 0.1) {
+                player.speedX = 0;
+            }
+        }
+        
+        // Apply gravity
+        player.speedY += gameState.gravity * deltaTime;
+        
+        // Apply jump if on ground and up key is pressed
+        if (keys.up && player.isOnGround && !player.isJumping) {
+            player.speedY = -player.jumpPower;
+            player.isJumping = true;
+            player.isOnGround = false;
+        }
+        
+        // Update position based on speed
+        player.x += player.speedX * deltaTime;
+        player.y += player.speedY * deltaTime;
+        
+        // Enforce canvas boundaries (left and right)
+        if (player.x - player.width/2 < 0) {
+            player.x = player.width/2;
+            player.speedX = 0;
+        } else if (player.x + player.width/2 > canvas.width) {
+            player.x = canvas.width - player.width/2;
+            player.speedX = 0;
+        }
+        
+        // Check if player is on the ground (bottom of canvas)
+        if (player.y >= canvas.height) {
+            player.y = canvas.height;
+            player.speedY = 0;
+            player.isOnGround = true;
+            player.isJumping = false;
+        } else {
+            player.isOnGround = false;
+        }
+    }
+
+    // Draw status information
+    function drawStatus() {
+        const player = gameState.player;
+        const statusY = 30;
+        const lineHeight = 20;
+        
+        ctx.fillStyle = 'black';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'left';
+        
+        ctx.fillText(`Position: (${Math.round(player.x)}, ${Math.round(player.y)})`, 10, statusY);
+        ctx.fillText(`Speed: (${Math.round(player.speedX)}, ${Math.round(player.speedY)})`, 10, statusY + lineHeight);
+        ctx.fillText(`Jumping: ${player.isJumping}`, 10, statusY + lineHeight * 2);
+        ctx.fillText(`On Ground: ${player.isOnGround}`, 10, statusY + lineHeight * 3);
+        ctx.fillText(`Controls: Arrow Keys to move, Up Arrow to jump`, 10, statusY + lineHeight * 4);
+    }
+
+    // Set up keyboard event listeners
+    function setupControls() {
+        window.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowLeft':
+                    gameState.keys.left = true;
+                    break;
+                case 'ArrowRight':
+                    gameState.keys.right = true;
+                    break;
+                case 'ArrowUp':
+                    gameState.keys.up = true;
+                    break;
+            }
+        });
+        
+        window.addEventListener('keyup', function(e) {
+            switch(e.key) {
+                case 'ArrowLeft':
+                    gameState.keys.left = false;
+                    break;
+                case 'ArrowRight':
+                    gameState.keys.right = false;
+                    break;
+                case 'ArrowUp':
+                    gameState.keys.up = false;
+                    break;
+            }
+        });
+        
+        console.log("Keyboard controls set up");
     }
 
     // Main animation loop
@@ -128,11 +229,12 @@ window.onload = function() {
         // Draw background
         drawGrid();
         
-        // Update circle position
-        updateCircle(deltaTime);
+        // Update and draw player
+        updatePlayer(deltaTime);
+        drawPlayer();
         
-        // Draw circle
-        drawCircle();
+        // Draw status information
+        drawStatus();
         
         // Draw border around canvas
         ctx.strokeStyle = '#333';
@@ -146,6 +248,9 @@ window.onload = function() {
         requestAnimationFrame(gameLoop);
     }
 
+    // Set up keyboard controls
+    setupControls();
+    
     // Start the game loop
     console.log("Starting game loop...");
     requestAnimationFrame(gameLoop);

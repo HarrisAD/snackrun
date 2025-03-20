@@ -3,18 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnackRun - Phase 1</title>
+    <title>SnackRun - Phase 2 Player Test</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="game-container">
-        <h1>SnackRun - Phase 1 Test</h1>
+        <h1>SnackRun - Phase 2 Player Test</h1>
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         <div class="debug-info">
             <p>FPS: <span id="fps">0</span></p>
             <p>Game Loop Status: <span id="loopStatus">Initializing...</span></p>
         </div>
+        <div class="instructions">
+            <p><strong>Controls:</strong> Use Arrow Keys to move, Up Arrow to jump</p>
+            <p><strong>Test Objectives:</strong></p>
+            <ul>
+                <li>Character should move left/right with arrow keys</li>
+                <li>Character should jump when up arrow is pressed</li>
+                <li>Character should be affected by gravity</li>
+                <li>Character should stay within canvas boundaries</li>
+            </ul>
+        </div>
     </div>
-    <script src="game.js" defer></script>
+    <script src="game.js"></script>
 </body>
 </html>

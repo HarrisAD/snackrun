@@ -9,16 +9,19 @@ body {
 
 .game-container {
     text-align: center;
+    max-width: 850px;
 }
 
 h1 {
     color: #333;
+    margin-bottom: 10px;
 }
 
 canvas {
     background-color: #fff;
     border: 2px solid #333;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 15px;
 }
 
 .debug-info {
@@ -27,4 +30,22 @@ canvas {
     padding: 10px;
     background-color: #e0e0e0;
     border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+.instructions {
+    text-align: left;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.instructions ul {
+    padding-left: 20px;
+}
+
+.instructions li {
+    margin-bottom: 5px;
 }
