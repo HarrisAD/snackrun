@@ -1,10 +1,18 @@
 // Main game file that loads and initializes everything
 import { GameState } from './gamestate.JS';
 import { levels, loadLevel } from './levels.js';
-import { drawGrid, drawGameObjects, drawPlayer, drawStatus, drawGameMessages } from './renderer.js';
+import { 
+    drawGrid, 
+    drawGameObjects, 
+    drawPlayer, 
+    drawStatus, 
+    drawGameMessages,
+    updateUI
+} from './renderer.js';
 import { updatePlayer, updatePlayerBoundingBox, updateGameObjectsBoundingBoxes } from './physics.js';
 import { checkCollisions } from './collision.js';
 import { drawShop, shopState } from './shop.js';
+import { toggleTutorial, uiState } from './ui.js';
 
 // Wait for page to load fully
 window.onload = function() {
@@ -26,8 +34,11 @@ window.onload = function() {
     setupKeyboardControls();
     setupMouseControls(canvas);
     
-    // Load first level
-    loadLevel(1);
+    // Show tutorial on first load
+    toggleTutorial();
+    
+    // Load first level (will happen when tutorial is closed)
+    // The actual level load is now triggered in the controls.js when the tutorial is closed
     
     // Show an initial instruction to click the canvas
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
@@ -38,8 +49,6 @@ window.onload = function() {
     ctx.textAlign = 'center';
     ctx.fillText('Click the canvas to activate controls', 400, 290);
     ctx.fillText('Use arrow keys to move and jump', 400, 320);
-    
-    // Add shop instructions
     ctx.fillText('Press S to open shop', 400, 350);
     
     // Main animation loop
@@ -70,8 +79,11 @@ window.onload = function() {
         // Draw background
         drawGrid(ctx, canvas);
         
-        // Only update game state if shop is not open
-        if (!shopState.isOpen) {
+        // Update UI animations (always update these)
+        updateUI(deltaTime);
+        
+        // Only update game state if shop is not open and tutorial is not showing
+        if (!shopState.isOpen && !uiState.showTutorial) {
             // Update player bounding box
             updatePlayerBoundingBox();
             

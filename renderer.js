@@ -1,10 +1,30 @@
 // Rendering and drawing functions
 import { levels } from './levels.js';
 import { shopState } from './shop.js';
+import { 
+    drawEnhancedStatusBar, 
+    drawLivesIndicator, 
+    drawUIAnimations, 
+    updateUIAnimations,
+    drawGameOverScreen,
+    drawLevelCompleteScreen,
+    drawTutorialOverlay,
+    addScoreAnimation,
+    addCoinAnimation,
+    addNotification,
+    startFade,
+    loseLife,
+    resetLives,
+    uiState
+} from './ui.js';
 
 // Add a counter for level transition countdown
 let levelTransitionCountdown = 3;
 let lastCountdownTime = 0;
+
+// Track time elapsed in current level
+let levelStartTime = 0;
+let levelElapsedTime = 0;
 
 // Draw background grid
 export function drawGrid(ctx, canvas) {
@@ -171,60 +191,28 @@ export function drawPlayer(ctx) {
     }
 }
 
-// Draw status information
+// Draw status information (REPLACED with enhanced status bar)
 export function drawStatus(ctx) {
     const gameState = window.gameState;
+    const canvas = ctx.canvas;
     
-    // Draw status banner background
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(0, 0, 800, 40);
+    // Draw enhanced status bar
+    drawEnhancedStatusBar(ctx, gameState, canvas);
     
-    // Draw score
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 20px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(`Score: ${gameState.score}`, 10, 27);
-    
-    // Draw level
-    ctx.fillText(`Level: ${gameState.currentLevel}`, 150, 27);
-    
-    // Draw total coins
-    ctx.fillStyle = '#f1c40f'; // Brighter gold color
-    ctx.fillText(`Coins: ${gameState.totalCoins}`, 250, 27);
-    
-    // Draw snacks remaining
-    ctx.fillStyle = 'white';
-    const remainingSnacks = gameState.snacks.filter(snack => !snack.collected).length;
-    ctx.fillText(`Snacks: ${remainingSnacks}/${gameState.snacks.length}`, 380, 27);
-    
-    // Draw shop hint - only when shop is not open, no game over, no level complete
-    if (!shopState.isOpen && !gameState.gameOver && !gameState.levelComplete) {
-        ctx.textAlign = 'right';
-        ctx.fillStyle = '#3498db';
-        ctx.fillText('Press "S" for Shop', 790, 27);
-    }
+    // Draw lives indicator
+    drawLivesIndicator(ctx);
 }
 
 // Draw game instructions or messages
 export function drawGameMessages(ctx, canvas) {
     const gameState = window.gameState;
     
-    // Don't draw messages if shop is open
-    if (shopState.isOpen) return;
+    // Don't draw messages if shop is open or tutorial is showing
+    if (shopState.isOpen || uiState.showTutorial) return;
     
     if (gameState.gameOver) {
-        // Draw larger game over message in center
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(250, 250, 300, 100);
-        
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 36px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('GAME OVER', 400, 300);
-        
-        ctx.font = '20px Arial';
-        ctx.fillText(`Final Score: ${gameState.score}`, 400, 330);
-        ctx.fillText('Press R to restart', 400, 360);
+        // Draw enhanced game over screen
+        drawGameOverScreen(ctx, gameState.score, canvas);
     } else if (gameState.levelComplete) {
         // Handle countdown timer
         const currentTime = Date.now();
@@ -246,26 +234,66 @@ export function drawGameMessages(ctx, canvas) {
             }
         }
         
-        // Draw larger level complete message in center
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(250, 250, 300, 100);
-        
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 36px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('LEVEL COMPLETE!', 400, 300);
-        
-        ctx.font = '20px Arial';
-        if (gameState.currentLevel < levels.length) {
-            ctx.fillText(`Next level in ${levelTransitionCountdown}...`, 400, 330);
-        } else {
-            ctx.fillText(`All levels completed!`, 400, 330);
-        }
+        // Draw enhanced level complete screen
+        drawLevelCompleteScreen(ctx, gameState.currentLevel, gameState.score, levelTransitionCountdown, canvas);
     }
+    
+    // Draw UI animations (score popups, coin animations, etc.)
+    drawUIAnimations(ctx);
+    
+    // Draw tutorial overlay if active
+    drawTutorialOverlay(ctx, canvas);
 }
 
 // Reset countdown (called when starting a new level)
 export function resetLevelCountdown() {
     levelTransitionCountdown = 3;
     lastCountdownTime = 0;
+    levelStartTime = Date.now();
+    levelElapsedTime = 0;
+    
+    // Reset lives at the start of the game (level 1)
+    if (window.gameState.currentLevel === 1) {
+        resetLives();
+    }
+    
+    // Add notification
+    addNotification(`Level ${window.gameState.currentLevel} Started!`);
+}
+
+// Update UI animations and effects
+export function updateUI(deltaTime) {
+    updateUIAnimations(deltaTime);
+    
+    // Update level elapsed time
+    if (levelStartTime > 0 && !window.gameState.gameOver && !window.gameState.levelComplete) {
+        levelElapsedTime = (Date.now() - levelStartTime) / 1000; // in seconds
+    }
+}
+
+// Called when a snack is collected
+export function onSnackCollected(snack) {
+    // Add score animation at snack position
+    addScoreAnimation(snack.x, snack.y, 10);
+}
+
+// Called when coins are earned
+export function onCoinsEarned(amount, x, y) {
+    // Add coin animation
+    for (let i = 0; i < amount; i++) {
+        // Stagger the coin animations slightly
+        setTimeout(() => {
+            addCoinAnimation(x, y);
+        }, i * 100);
+    }
+    
+    // Add notification
+    addNotification(`+${amount} coins earned!`);
+}
+
+// Called when player hits a bomb
+export function onBombHit() {
+    // We're no longer using this function - handling is done directly in collision.js
+    // This is kept here for backwards compatibility
+    console.warn("onBombHit called but functionality moved to collision.js");
 }

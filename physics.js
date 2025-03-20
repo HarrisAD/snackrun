@@ -1,4 +1,5 @@
 // Physics and movement calculations
+import { isGamePaused } from './controls.js';
 
 // Update player position and state
 export function updatePlayer(deltaTime, canvas) {
@@ -6,8 +7,8 @@ export function updatePlayer(deltaTime, canvas) {
     const player = gameState.player;
     const keys = gameState.keys;
     
-    // Don't update player if game over or level complete
-    if (gameState.gameOver || gameState.levelComplete) {
+    // Don't update player if game over or level complete or paused
+    if (gameState.gameOver || gameState.levelComplete || isGamePaused()) {
         return;
     }
     
