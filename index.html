@@ -3,28 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnackRun - Phase 2 Player Test</title>
+    <title>SnackRun - Phase 4 Modular Implementation</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="game-container">
-        <h1>SnackRun - Phase 2 Player Test</h1>
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <h1>SnackRun - Phase 4 Modular Implementation</h1>
+        <canvas id="gameCanvas" width="800" height="600" tabindex="1"></canvas>
         <div class="debug-info">
             <p>FPS: <span id="fps">0</span></p>
             <p>Game Loop Status: <span id="loopStatus">Initializing...</span></p>
         </div>
         <div class="instructions">
-            <p><strong>Controls:</strong> Use Arrow Keys to move, Up Arrow to jump</p>
+            <p><strong>Controls:</strong></p>
+            <ul>
+                <li>Left/Right Arrows: Move character</li>
+                <li>Up Arrow: Jump</li>
+                <li>R Key: Reset current level</li>
+                <li>1-3 Keys: Jump to specific level (for testing)</li>
+            </ul>
+            <p><strong>IMPORTANT:</strong> Click on the canvas first to enable keyboard controls!</p>
             <p><strong>Test Objectives:</strong></p>
             <ul>
-                <li>Character should move left/right with arrow keys</li>
-                <li>Character should jump when up arrow is pressed</li>
-                <li>Character should be affected by gravity</li>
-                <li>Character should stay within canvas boundaries</li>
+                <li>Test platform collision detection (stand on platforms)</li>
+                <li>Collect all snacks to complete the level</li>
+                <li>Test level progression system (levels 1-3)</li>
+                <li>Test game over and level completion states</li>
+                <li>Verify proper collision detection with all objects</li>
             </ul>
         </div>
     </div>
-    <script src="game.js"></script>
+    <!-- Note the type="module" attribute, which enables ES6 module imports -->
+    <script type="module" src="game.js"></script>
 </body>
 </html>

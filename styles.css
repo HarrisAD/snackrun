@@ -22,6 +22,11 @@ canvas {
     border: 2px solid #333;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     margin-bottom: 15px;
+    outline: none; /* Remove focus outline */
+}
+
+canvas:focus {
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.7);
 }
 
 .debug-info {
