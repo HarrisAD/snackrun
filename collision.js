@@ -1,5 +1,7 @@
 // Collision detection and resolution
 import { loadLevel, levels } from './levels.js';
+import { shopState } from './shop.js';
+import { resetLevelCountdown } from './renderer.js';
 
 // Track when the level completion was triggered
 let levelCompleteTime = 0;
@@ -17,7 +19,7 @@ export function checkCollisions() {
     const gameState = window.gameState;
     
     // Don't check collisions if game is over or level complete
-    if (gameState.gameOver || gameState.levelComplete) {
+    if (gameState.gameOver || gameState.levelComplete || shopState.isOpen) {
         return;
     }
     
@@ -94,7 +96,7 @@ export function checkCollisions() {
 }
 
 // Check if level is complete
-export function checkLevelCompletion() {
+function checkLevelCompletion() {
     const gameState = window.gameState;
     const remainingSnacks = gameState.snacks.filter(snack => !snack.collected).length;
     
@@ -110,6 +112,7 @@ export function checkLevelCompletion() {
         if (gameState.currentLevel < levels.length) {
             setTimeout(() => {
                 loadLevel(gameState.currentLevel + 1);
+                resetLevelCountdown(); // Reset the countdown for next time
             }, 3000); // Wait 3 seconds before loading next level
         } else {
             console.log("Game Complete! All levels finished.");

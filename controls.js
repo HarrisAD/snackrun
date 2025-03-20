@@ -1,10 +1,16 @@
 // Controls and input handling
-import { loadLevel, levels } from './levels.js';
+import { loadLevel } from './levels.js';
+import { toggleShop, handleShopClick, shopState } from './shop.js';
 
 // Handler for keydown events
-function handleKeyDown(e) {
+export function handleKeyDown(e) {
     const gameState = window.gameState;
     console.log("Key pressed:", e.key);  // Debug log
+    
+    // Don't process keys if shop is open (except ESC key)
+    if (shopState.isOpen && e.key !== 'Escape') {
+        return;
+    }
     
     switch(e.key) {
         case 'ArrowLeft':
@@ -21,12 +27,23 @@ function handleKeyDown(e) {
         case 'R':
             loadLevel(gameState.currentLevel);
             break;
+        // Add 's' key to toggle shop
+        case 's':
+        case 'S':
+            toggleShop();
+            break;
+        // Add ESC key to close shop
+        case 'Escape':
+            if (shopState.isOpen) {
+                toggleShop();
+            }
+            break;
         // Add number keys to jump to specific levels (for testing)
         case '1':
         case '2':
         case '3':
             const levelNum = parseInt(e.key);
-            if (levelNum > 0 && levelNum <= levels.length) {
+            if (levelNum > 0) {
                 loadLevel(levelNum);
             }
             break;
@@ -34,7 +51,7 @@ function handleKeyDown(e) {
 }
 
 // Handler for keyup events
-function handleKeyUp(e) {
+export function handleKeyUp(e) {
     const gameState = window.gameState;
     console.log("Key released:", e.key);  // Debug log
     
@@ -51,23 +68,18 @@ function handleKeyUp(e) {
     }
 }
 
-// Set up all input controls
-export function setupControls(canvas) {
-    // Set up keyboard controls
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    console.log("Keyboard controls set up");
+// Handler for mouse clicks
+export function handleClick(e) {
+    // Get canvas coordinates
+    const canvas = document.getElementById('gameCanvas');
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
     
-    // Set up click handler for canvas focus
-    canvas.addEventListener('click', function() {
-        console.log('Canvas clicked - ensuring focus for keyboard input');
-        // Add a visual indicator that the game is active
-        canvas.style.boxShadow = '0 0 10px rgba(52, 152, 219, 0.7)';
-        setTimeout(() => {
-            canvas.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.1)';
-        }, 300);
-        
-        // Focus on canvas for keyboard events
-        canvas.focus();
-    });
+    console.log("Click at:", x, y);  // Debug log
+    
+    // Handle shop clicks if shop is open
+    if (shopState.isOpen) {
+        handleShopClick(x, y, canvas);
+    }
 }

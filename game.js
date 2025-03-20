@@ -1,10 +1,10 @@
 // Main game file that loads and initializes everything
 import { GameState } from './gamestate.JS';
-import { setupControls } from './controls.js';
-import { loadLevel } from './levels.js';
+import { levels, loadLevel } from './levels.js';
 import { drawGrid, drawGameObjects, drawPlayer, drawStatus, drawGameMessages } from './renderer.js';
 import { updatePlayer, updatePlayerBoundingBox, updateGameObjectsBoundingBoxes } from './physics.js';
-import { checkCollisions, checkLevelCompletion } from './collision.js';
+import { checkCollisions } from './collision.js';
+import { drawShop, shopState } from './shop.js';
 
 // Wait for page to load fully
 window.onload = function() {
@@ -22,8 +22,9 @@ window.onload = function() {
     // Initialize game state (This is now shared across modules)
     window.gameState = new GameState(canvas);
     
-    // Set up keyboard controls
-    setupControls(canvas);
+    // Set up event listeners for keyboard control
+    setupKeyboardControls();
+    setupMouseControls(canvas);
     
     // Load first level
     loadLevel(1);
@@ -37,6 +38,9 @@ window.onload = function() {
     ctx.textAlign = 'center';
     ctx.fillText('Click the canvas to activate controls', 400, 290);
     ctx.fillText('Use arrow keys to move and jump', 400, 320);
+    
+    // Add shop instructions
+    ctx.fillText('Press S to open shop', 400, 350);
     
     // Main animation loop
     function gameLoop(timestamp) {
@@ -66,27 +70,33 @@ window.onload = function() {
         // Draw background
         drawGrid(ctx, canvas);
         
-        // Update player bounding box
-        updatePlayerBoundingBox();
-        
-        // Update game objects bounding boxes
-        updateGameObjectsBoundingBoxes();
-        
-        // Update and draw player
-        updatePlayer(deltaTime, canvas);
+        // Only update game state if shop is not open
+        if (!shopState.isOpen) {
+            // Update player bounding box
+            updatePlayerBoundingBox();
+            
+            // Update game objects bounding boxes
+            updateGameObjectsBoundingBoxes();
+            
+            // Update and draw player
+            updatePlayer(deltaTime, canvas);
+            
+            // Check for collisions
+            checkCollisions();
+        }
         
         // Draw game objects
         drawGameObjects(ctx);
         drawPlayer(ctx);
-        
-        // Check for collisions
-        checkCollisions();
         
         // Draw status information
         drawStatus(ctx);
         
         // Draw game messages
         drawGameMessages(ctx, canvas);
+        
+        // Draw shop if open
+        drawShop(ctx, canvas);
         
         // Draw border around canvas
         ctx.strokeStyle = '#333';
@@ -104,3 +114,31 @@ window.onload = function() {
     console.log("Starting game loop...");
     requestAnimationFrame(gameLoop);
 };
+
+// Define controls directly in this file to avoid circular dependencies
+function setupKeyboardControls() {
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    console.log("Keyboard controls set up");
+}
+
+function setupMouseControls(canvas) {
+    canvas.addEventListener('click', handleClick);
+    console.log("Mouse controls set up");
+    
+    // Set up click handler for canvas focus
+    canvas.addEventListener('click', function() {
+        console.log('Canvas clicked - ensuring focus for keyboard input');
+        // Add a visual indicator that the game is active
+        canvas.style.boxShadow = '0 0 10px rgba(52, 152, 219, 0.7)';
+        setTimeout(() => {
+            canvas.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.1)';
+        }, 300);
+        
+        // Focus on canvas for keyboard events
+        canvas.focus();
+    });
+}
+
+// Import these functions after defining them to avoid circular references
+import { handleKeyDown, handleKeyUp, handleClick } from './controls.js';

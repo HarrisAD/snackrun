@@ -66,9 +66,3 @@ export class GameState {
         console.log(`Awarded ${amount} coins. Total: ${this.totalCoins}`);
     }
 }
-
-// Get random snack color (utility function)
-export function getRandomSnackColor() {
-    const colors = ['#2ecc71', '#f1c40f', '#9b59b6', '#3498db', '#1abc9c', '#f39c12'];
-    return colors[Math.floor(Math.random() * colors.length)];
-}

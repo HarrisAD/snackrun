@@ -1,5 +1,6 @@
 // Rendering and drawing functions
 import { levels } from './levels.js';
+import { shopState } from './shop.js';
 
 // Add a counter for level transition countdown
 let levelTransitionCountdown = 3;
@@ -174,62 +175,57 @@ export function drawPlayer(ctx) {
 export function drawStatus(ctx) {
     const gameState = window.gameState;
     
+    // Draw status banner background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, 800, 40);
+    
     // Draw score
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = 'white';
     ctx.font = 'bold 20px Arial';
     ctx.textAlign = 'left';
-    ctx.fillText(`Score: ${gameState.score}`, 10, 30);
+    ctx.fillText(`Score: ${gameState.score}`, 10, 27);
     
     // Draw level
-    ctx.fillText(`Level: ${gameState.currentLevel}`, 150, 30);
+    ctx.fillText(`Level: ${gameState.currentLevel}`, 150, 27);
     
     // Draw total coins
-    ctx.fillText(`Coins: ${gameState.totalCoins}`, 250, 30);
+    ctx.fillStyle = '#f1c40f'; // Brighter gold color
+    ctx.fillText(`Coins: ${gameState.totalCoins}`, 250, 27);
     
     // Draw snacks remaining
+    ctx.fillStyle = 'white';
     const remainingSnacks = gameState.snacks.filter(snack => !snack.collected).length;
-    ctx.fillText(`Snacks: ${remainingSnacks}/${gameState.snacks.length}`, 10, 60);
+    ctx.fillText(`Snacks: ${remainingSnacks}/${gameState.snacks.length}`, 380, 27);
     
-    // Draw bombs remaining
-    const remainingBombs = gameState.bombs.filter(bomb => bomb.active).length;
-    ctx.fillText(`Bombs: ${remainingBombs}`, 10, 90);
-    
-    // Draw debug info
-    const player = gameState.player;
-    ctx.font = '16px Arial';
-    ctx.fillText(`Position: (${Math.round(player.x)}, ${Math.round(player.y)})`, 580, 30);
-    ctx.fillText(`On Ground: ${player.isOnGround}`, 580, 60);
-    ctx.fillText(`Jumping: ${player.isJumping}`, 580, 90);
+    // Draw shop hint - only when shop is not open, no game over, no level complete
+    if (!shopState.isOpen && !gameState.gameOver && !gameState.levelComplete) {
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#3498db';
+        ctx.fillText('Press "S" for Shop', 790, 27);
+    }
 }
 
 // Draw game instructions or messages
 export function drawGameMessages(ctx, canvas) {
     const gameState = window.gameState;
     
-    // Draw instruction banner
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(200, 10, 400, 30);
-    
-    ctx.fillStyle = 'white';
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'center';
+    // Don't draw messages if shop is open
+    if (shopState.isOpen) return;
     
     if (gameState.gameOver) {
-        ctx.fillText('GAME OVER! Press R to restart level', 400, 30);
-        
         // Draw larger game over message in center
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(250, 250, 300, 100);
         
         ctx.fillStyle = 'white';
         ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
         ctx.fillText('GAME OVER', 400, 300);
         
         ctx.font = '20px Arial';
         ctx.fillText(`Final Score: ${gameState.score}`, 400, 330);
+        ctx.fillText('Press R to restart', 400, 360);
     } else if (gameState.levelComplete) {
-        ctx.fillText('LEVEL COMPLETE!', 400, 30);
-        
         // Handle countdown timer
         const currentTime = Date.now();
         
@@ -243,6 +239,11 @@ export function drawGameMessages(ctx, canvas) {
         if (currentTime - lastCountdownTime >= 1000) {
             levelTransitionCountdown--;
             lastCountdownTime = currentTime;
+            
+            // Ensure countdown never goes below 1
+            if (levelTransitionCountdown < 1) {
+                levelTransitionCountdown = 1; // Keep it at 1 until the level actually changes
+            }
         }
         
         // Draw larger level complete message in center
@@ -251,6 +252,7 @@ export function drawGameMessages(ctx, canvas) {
         
         ctx.fillStyle = 'white';
         ctx.font = 'bold 36px Arial';
+        ctx.textAlign = 'center';
         ctx.fillText('LEVEL COMPLETE!', 400, 300);
         
         ctx.font = '20px Arial';
@@ -259,16 +261,11 @@ export function drawGameMessages(ctx, canvas) {
         } else {
             ctx.fillText(`All levels completed!`, 400, 330);
         }
-        
-        // Reset countdown when it's done
-        if (levelTransitionCountdown < 0) {
-            levelTransitionCountdown = 3;
-            lastCountdownTime = 0;
-        }
-    } else {
-        // Reset the countdown when not in level complete state
-        levelTransitionCountdown = 3;
-        lastCountdownTime = 0;
-        ctx.fillText(`Collect all snacks! Avoid bombs! Level ${gameState.currentLevel}`, 400, 30);
     }
+}
+
+// Reset countdown (called when starting a new level)
+export function resetLevelCountdown() {
+    levelTransitionCountdown = 3;
+    lastCountdownTime = 0;
 }
