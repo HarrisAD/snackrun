@@ -1,5 +1,5 @@
 // Main game file that loads and initializes everything
-import { GameState } from './gameState.js';
+import { GameState } from './gamestate.JS';
 import { setupControls } from './controls.js';
 import { loadLevel } from './levels.js';
 import { drawGrid, drawGameObjects, drawPlayer, drawStatus, drawGameMessages } from './renderer.js';

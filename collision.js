@@ -1,6 +1,9 @@
 // Collision detection and resolution
 import { loadLevel, levels } from './levels.js';
 
+// Track when the level completion was triggered
+let levelCompleteTime = 0;
+
 // Check if two bounding boxes are colliding
 export function isColliding(box1, box2) {
     return box1.left < box2.right && 
@@ -9,7 +12,7 @@ export function isColliding(box1, box2) {
            box1.bottom > box2.top;
 }
 
-// Check for collisions between player and game objects
+// Check for collisions between player and game objects (snacks and bombs)
 export function checkCollisions() {
     const gameState = window.gameState;
     
@@ -22,24 +25,70 @@ export function checkCollisions() {
     
     // Check collisions with snacks
     gameState.snacks.forEach(snack => {
-        if (!snack.collected && isColliding(player.boundingBox, snack.boundingBox)) {
-            snack.collected = true;
-            gameState.score += 10;
-            console.log(`Snack collected! Score: ${gameState.score}`);
+        if (!snack.collected) {
+            // Simple circle-rectangle collision for better accuracy
+            const circleDistanceX = Math.abs(snack.x - player.x);
+            const circleDistanceY = Math.abs(snack.y - (player.y - player.height/2));
             
-            // Check if all snacks are collected
-            checkLevelCompletion();
+            if (circleDistanceX > (player.width/2 + snack.radius)) { return; }
+            if (circleDistanceY > (player.height/2 + snack.radius)) { return; }
+            
+            if (circleDistanceX <= (player.width/2)) { 
+                snack.collected = true;
+                gameState.score += 10;
+                console.log(`Snack collected! Score: ${gameState.score}`);
+                checkLevelCompletion();
+                return;
+            }
+            if (circleDistanceY <= (player.height/2)) { 
+                snack.collected = true;
+                gameState.score += 10;
+                console.log(`Snack collected! Score: ${gameState.score}`);
+                checkLevelCompletion();
+                return;
+            }
+            
+            const cornerDistance = Math.pow(circleDistanceX - player.width/2, 2) +
+                                  Math.pow(circleDistanceY - player.height/2, 2);
+            
+            if (cornerDistance <= Math.pow(snack.radius, 2)) {
+                snack.collected = true;
+                gameState.score += 10;
+                console.log(`Snack collected! Score: ${gameState.score}`);
+                checkLevelCompletion();
+            }
         }
     });
     
     // Check collisions with bombs
     gameState.bombs.forEach(bomb => {
-        if (bomb.active && isColliding(player.boundingBox, bomb.boundingBox)) {
-            bomb.active = false;
-            console.log("BOOM! Bomb hit!");
-            // Trigger game over
-            gameState.gameOver = true;
-            player.color = '#7f8c8d'; // Change player color to indicate death
+        if (bomb.active) {
+            // Simple circle-rectangle collision for better accuracy
+            const circleDistanceX = Math.abs(bomb.x - player.x);
+            const circleDistanceY = Math.abs(bomb.y - (player.y - player.height/2));
+            
+            if (circleDistanceX > (player.width/2 + bomb.radius)) { return; }
+            if (circleDistanceY > (player.height/2 + bomb.radius)) { return; }
+            
+            if (circleDistanceX <= (player.width/2) || circleDistanceY <= (player.height/2)) {
+                bomb.active = false;
+                console.log("BOOM! Bomb hit!");
+                // Trigger game over
+                gameState.gameOver = true;
+                player.color = '#7f8c8d'; // Change player color to indicate death
+                return;
+            }
+            
+            const cornerDistance = Math.pow(circleDistanceX - player.width/2, 2) +
+                                 Math.pow(circleDistanceY - player.height/2, 2);
+            
+            if (cornerDistance <= Math.pow(bomb.radius, 2)) {
+                bomb.active = false;
+                console.log("BOOM! Bomb hit!");
+                // Trigger game over
+                gameState.gameOver = true;
+                player.color = '#7f8c8d'; // Change player color to indicate death
+            }
         }
     });
 }
@@ -54,6 +103,9 @@ export function checkLevelCompletion() {
         gameState.awardCoins(5); // Award coins for level completion
         console.log("Level Complete!");
         
+        // Record the time when level was completed
+        levelCompleteTime = Date.now();
+        
         // If there are more levels, schedule next level loading
         if (gameState.currentLevel < levels.length) {
             setTimeout(() => {
@@ -63,4 +115,14 @@ export function checkLevelCompletion() {
             console.log("Game Complete! All levels finished.");
         }
     }
+}
+
+// Get the timestamp when level completion was triggered (for external use)
+export function getLevelCompleteTime() {
+    return levelCompleteTime;
+}
+
+// Reset level completion timer (for external use)
+export function resetLevelCompleteTime() {
+    levelCompleteTime = 0;
 }

@@ -1,6 +1,10 @@
 // Rendering and drawing functions
 import { levels } from './levels.js';
 
+// Add a counter for level transition countdown
+let levelTransitionCountdown = 3;
+let lastCountdownTime = 0;
+
 // Draw background grid
 export function drawGrid(ctx, canvas) {
     const gridSize = 50;
@@ -226,6 +230,21 @@ export function drawGameMessages(ctx, canvas) {
     } else if (gameState.levelComplete) {
         ctx.fillText('LEVEL COMPLETE!', 400, 30);
         
+        // Handle countdown timer
+        const currentTime = Date.now();
+        
+        // Initialize the countdown when level first completes
+        if (lastCountdownTime === 0) {
+            lastCountdownTime = currentTime;
+            levelTransitionCountdown = 3;
+        }
+        
+        // Update the countdown every second
+        if (currentTime - lastCountdownTime >= 1000) {
+            levelTransitionCountdown--;
+            lastCountdownTime = currentTime;
+        }
+        
         // Draw larger level complete message in center
         ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
         ctx.fillRect(250, 250, 300, 100);
@@ -236,11 +255,20 @@ export function drawGameMessages(ctx, canvas) {
         
         ctx.font = '20px Arial';
         if (gameState.currentLevel < levels.length) {
-            ctx.fillText(`Next level in 3 seconds...`, 400, 330);
+            ctx.fillText(`Next level in ${levelTransitionCountdown}...`, 400, 330);
         } else {
             ctx.fillText(`All levels completed!`, 400, 330);
         }
+        
+        // Reset countdown when it's done
+        if (levelTransitionCountdown < 0) {
+            levelTransitionCountdown = 3;
+            lastCountdownTime = 0;
+        }
     } else {
+        // Reset the countdown when not in level complete state
+        levelTransitionCountdown = 3;
+        lastCountdownTime = 0;
         ctx.fillText(`Collect all snacks! Avoid bombs! Level ${gameState.currentLevel}`, 400, 30);
     }
 }

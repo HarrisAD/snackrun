@@ -1,5 +1,4 @@
 // Physics and movement calculations
-import { isColliding } from './collision.js';
 
 // Update player position and state
 export function updatePlayer(deltaTime, canvas) {
@@ -35,72 +34,112 @@ export function updatePlayer(deltaTime, canvas) {
         player.isOnGround = false;
     }
     
-    // Store old position for collision resolution
-    const oldX = player.x;
-    const oldY = player.y;
+    // Reset ground detection
+    player.isOnGround = false;
     
-    // Update position based on speed
-    player.x += player.speedX * deltaTime;
-    player.y += player.speedY * deltaTime;
+    // Move in X direction
+    const newX = player.x + player.speedX * deltaTime;
     
-    // Update player bounding box
-    updatePlayerBoundingBox();
-    
-    // Enforce canvas boundaries (left and right)
-    if (player.x - player.width/2 < 0) {
-        player.x = player.width/2;
-        player.speedX = 0;
-    } else if (player.x + player.width/2 > canvas.width) {
-        player.x = canvas.width - player.width/2;
-        player.speedX = 0;
-    }
-    
-    // Check for platform collisions
-    player.isOnGround = false; // Reset ground detection
+    // Check horizontal platform collisions
+    let canMoveX = true;
+    const playerHalfWidth = player.width / 2;
+    const playerHeight = player.height;
     
     gameState.platforms.forEach(platform => {
-        // Check if player is colliding with platform
-        if (isColliding(player.boundingBox, {
-            left: platform.x,
-            right: platform.x + platform.width,
-            top: platform.y,
-            bottom: platform.y + platform.height
-        })) {
-            // Determine collision side
-            const fromTop = oldY < platform.y && player.speedY > 0;
-            const fromBottom = oldY > platform.y + platform.height && player.speedY < 0;
-            const fromLeft = oldX < platform.x && player.speedX > 0;
-            const fromRight = oldX > platform.x + platform.width && player.speedX < 0;
+        // Check if player is within vertical bounds of platform
+        if (player.y - playerHeight < platform.y + platform.height && 
+            player.y > platform.y) {
             
-            // Resolve collision
-            if (fromTop) {
+            // Check right collision
+            if (player.speedX > 0 && 
+                newX + playerHalfWidth > platform.x && 
+                newX - playerHalfWidth < platform.x && 
+                player.x + playerHalfWidth <= platform.x) {
+                
+                player.x = platform.x - playerHalfWidth;
+                player.speedX = 0;
+                canMoveX = false;
+            }
+            
+            // Check left collision
+            if (player.speedX < 0 && 
+                newX - playerHalfWidth < platform.x + platform.width && 
+                newX + playerHalfWidth > platform.x + platform.width && 
+                player.x - playerHalfWidth >= platform.x + platform.width) {
+                
+                player.x = platform.x + platform.width + playerHalfWidth;
+                player.speedX = 0;
+                canMoveX = false;
+            }
+        }
+    });
+    
+    // Apply X movement if no collisions
+    if (canMoveX) {
+        player.x = newX;
+    }
+    
+    // Move in Y direction
+    const newY = player.y + player.speedY * deltaTime;
+    
+    // Check vertical platform collisions
+    let canMoveY = true;
+    
+    gameState.platforms.forEach(platform => {
+        // Check if player is within horizontal bounds of platform
+        if (player.x + playerHalfWidth > platform.x && 
+            player.x - playerHalfWidth < platform.x + platform.width) {
+            
+            // Check landing on top of platform
+            if (player.speedY > 0 && 
+                newY > platform.y && 
+                newY - playerHeight < platform.y && 
+                player.y - playerHeight <= platform.y) {
+                
                 player.y = platform.y;
                 player.speedY = 0;
                 player.isOnGround = true;
                 player.isJumping = false;
-            } else if (fromBottom) {
-                player.y = platform.y + platform.height + player.height;
-                player.speedY = 0;
-            } else if (fromLeft) {
-                player.x = platform.x - player.width/2;
-                player.speedX = 0;
-            } else if (fromRight) {
-                player.x = platform.x + platform.width + player.width/2;
-                player.speedX = 0;
+                canMoveY = false;
             }
             
-            // Update bounding box after collision resolution
-            updatePlayerBoundingBox();
+            // Check hitting bottom of platform
+            if (player.speedY < 0 && 
+                newY - playerHeight < platform.y + platform.height && 
+                newY > platform.y + platform.height && 
+                player.y >= platform.y + platform.height) {
+                
+                player.y = platform.y + platform.height + playerHeight;
+                player.speedY = 0;
+                canMoveY = false;
+            }
         }
     });
     
-    // Check if player is on the ground (bottom of canvas)
-    if (player.y >= canvas.height) {
+    // Apply Y movement if no collisions
+    if (canMoveY) {
+        player.y = newY;
+    }
+    
+    // Check bottom of screen collision
+    if (player.y > canvas.height) {
         player.y = canvas.height;
         player.speedY = 0;
         player.isOnGround = true;
         player.isJumping = false;
     }
+    
+    // Check left and right screen boundaries
+    if (player.x - playerHalfWidth < 0) {
+        player.x = playerHalfWidth;
+        player.speedX = 0;
+    } else if (player.x + playerHalfWidth > canvas.width) {
+        player.x = canvas.width - playerHalfWidth;
+        player.speedX = 0;
+    }
+    
+    // Update player bounding box for other collision checks
+    updatePlayerBoundingBox();
 }
 
 // Update player's bounding box
