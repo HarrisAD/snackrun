@@ -1,4 +1,15 @@
-// Main game file with localStorage references removed
+// Main game file - entry point
+import { GameState } from './gamestate.JS';
+import { handleKeyDown, handleKeyUp, handleClick } from './controls.js';
+import { drawGrid, drawGameObjects, drawPlayer, drawStatus, drawGameMessages } from './renderer.js';
+import { updatePlayer, updatePlayerBoundingBox, updateGameObjectsBoundingBoxes } from './physics.js';
+import { checkCollisions } from './collision.js';
+import { updateUI } from './ui.js';
+import { drawShop, shopState } from './shop.js';
+import { toggleTutorial, uiState } from './ui.js';
+import { progressionState } from './levelProgression.js';
+import { loadLevel } from './levels.js';
+
 // Wait for page to load fully
 window.onload = function() {
     console.log("Page loaded!");
@@ -135,7 +146,7 @@ window.onload = function() {
         
         // Add version number
         ctx.font = '14px Arial';
-        ctx.fillText('Phase 7: Level Progression', 400, 380);
+        ctx.fillText('SnackRun Game', 400, 380);
     }
     
     // Start the game loop
@@ -146,15 +157,25 @@ window.onload = function() {
 // Function called when starting a new level
 export function startNewLevel(levelNumber) {
     try {
+        console.log(`startNewLevel called for level ${levelNumber}`);
         // Load the level
         loadLevel(levelNumber);
         
-        // Reset level countdown
-        resetLevelCountdown();
+        // Try to reset level countdown
+        try {
+            resetLevelCountdown();
+        } catch (e) {
+            console.log("Could not reset level countdown:", e);
+        }
         
         // Show level start notification
         if (levelNumber > 1) {
-            addNotification(`Starting Level ${levelNumber}!`, 3000);
+            // Add notification using try-catch to ensure errors don't stop execution
+            try {
+                addNotification(`Starting Level ${levelNumber}!`, 3000);
+            } catch (e) {
+                console.log("Could not show notification:", e);
+            }
         }
     } catch (error) {
         console.error("Error starting new level:", error);

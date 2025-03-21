@@ -1,5 +1,4 @@
 // Shop system for purchasing upgrades
-import { levels } from './levels.js';
 
 // Available upgrades
 export const upgrades = {
@@ -194,7 +193,6 @@ export function drawShop(ctx, canvas) {
     // Draw upgrade options
     const upgradeY = panelY + 150;
     const upgradeHeight = 100;
-    const optionGap = 20;
     
     // Draw Jump Power upgrade
     drawUpgradeOption(
@@ -289,9 +287,10 @@ function drawUpgradeOption(ctx, x, y, width, height, upgrade, isSelected) {
 }
 
 // Handle shop click events
-export function handleShopClick(x, y, canvas) {
+export function handleShopClick(x, y) {
     if (!shopState.isOpen) return false;
     
+    const canvas = document.getElementById('gameCanvas');
     const panelWidth = 600;
     const panelHeight = 400;
     const panelX = (canvas.width - panelWidth) / 2;

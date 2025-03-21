@@ -12,7 +12,6 @@ let gameInitialized = false;
 // Handler for keydown events
 export function handleKeyDown(e) {
     const gameState = window.gameState;
-    console.log("Key pressed:", e.key);  // Debug log
     
     // Handler for tutorial closing with any key
     if (uiState.showTutorial) {
@@ -108,7 +107,6 @@ export function handleKeyDown(e) {
 // Handler for keyup events
 export function handleKeyUp(e) {
     const gameState = window.gameState;
-    console.log("Key released:", e.key);  // Debug log
     
     // Don't process keys if in tutorial
     if (uiState.showTutorial) {
@@ -136,8 +134,6 @@ export function handleClick(e) {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
-    console.log("Click at:", x, y);  // Debug log
-    
     // Handle tutorial closing with click
     if (uiState.showTutorial) {
         toggleTutorial();
@@ -157,7 +153,7 @@ export function handleClick(e) {
     
     // Handle shop clicks if shop is open
     if (shopState.isOpen) {
-        handleShopClick(x, y, canvas);
+        handleShopClick(x, y);
     }
     
     // If game is paused, unpause it

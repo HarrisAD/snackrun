@@ -194,6 +194,9 @@ export const levels = [
     }
 ];
 
+// Make levels available globally
+window.gameLevels = levels;
+
 // Load level
 export function loadLevel(levelNumber) {
     const gameState = window.gameState;
@@ -388,6 +391,7 @@ export function progressToNextLevel() {
         return;
     }
     
+    console.log(`Level complete! Moving from level ${gameState.currentLevel} to level ${gameState.currentLevel + 1}`);
     gameState.inTransition = true;
     
     const currentLevel = gameState.currentLevel;
@@ -396,11 +400,13 @@ export function progressToNextLevel() {
     // Call transition effect from progression system
     startLevelTransition(currentLevel, nextLevel, () => {
         // This function will be called during the transition
+        console.log(`Starting new level: ${nextLevel}`);
         startNewLevel(nextLevel);
         
         // Clear the transition flag after a delay
         setTimeout(() => {
             gameState.inTransition = false;
+            console.log("Transition flag cleared");
         }, 1000);
     });
 }

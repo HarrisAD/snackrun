@@ -46,6 +46,9 @@ export class GameState {
         // Store canvas dimensions for easy access
         this.canvasWidth = canvas.width;
         this.canvasHeight = canvas.height;
+        
+        // Debug mode flag
+        this.debugMode = false;
     }
     
     // Reset the game state for a new level
@@ -62,10 +65,7 @@ export class GameState {
         this.player.color = '#e74c3c';
         this.inTransition = false; // Reset transition flag
     }
-    
-    // Award coins for level completion
-    awardCoins(amount) {
-        this.totalCoins += amount;
-        console.log(`Awarded ${amount} coins. Total: ${this.totalCoins}`);
-    }
 }
+
+// Allow toggling debug mode globally
+window.DEBUG_MODE = false;
