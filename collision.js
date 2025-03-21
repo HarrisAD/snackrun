@@ -1,5 +1,6 @@
 // Collision detection and resolution
-import { progressToNextLevel, loadLevel } from './levels.js';
+import { loadLevel } from './levels.js';
+import { progressToNextLevel } from './levels.js';
 import { shopState } from './shop.js';
 import { uiState, addNotification } from './ui.js';
 import { onSnackCollected, onCoinsEarned } from './renderer.js';
@@ -28,47 +29,115 @@ export function checkCollisions() {
     
     // Check collisions with snacks
     gameState.snacks.forEach(snack => {
-        if (!snack.collected && isColliding(player.boundingBox, snack.boundingBox)) {
-            snack.collected = true;
-            gameState.score += 10;
+        if (!snack.collected) {
+            // Simple circle-rectangle collision for better accuracy
+            const circleDistanceX = Math.abs(snack.x - player.x);
+            const circleDistanceY = Math.abs(snack.y - (player.y - player.height/2));
             
-            // Show collection animation
-            if (typeof onSnackCollected === 'function') {
-                onSnackCollected(snack);
+            if (circleDistanceX > (player.width/2 + snack.radius)) { return; }
+            if (circleDistanceY > (player.height/2 + snack.radius)) { return; }
+            
+            if (circleDistanceX <= (player.width/2)) { 
+                snack.collected = true;
+                gameState.score += 10;
+                
+                // Show collection animation
+                if (typeof onSnackCollected === 'function') {
+                    onSnackCollected(snack);
+                }
+                
+                console.log(`Snack collected! Score: ${gameState.score}`);
+                checkLevelCompletion();
+                return;
             }
             
-            console.log(`Snack collected! Score: ${gameState.score}`);
-            checkLevelCompletion();
+            if (circleDistanceY <= (player.height/2)) { 
+                snack.collected = true;
+                gameState.score += 10;
+                
+                // Show collection animation
+                if (typeof onSnackCollected === 'function') {
+                    onSnackCollected(snack);
+                }
+                
+                console.log(`Snack collected! Score: ${gameState.score}`);
+                checkLevelCompletion();
+                return;
+            }
+            
+            const cornerDistance = Math.pow(circleDistanceX - player.width/2, 2) +
+                                  Math.pow(circleDistanceY - player.height/2, 2);
+            
+            if (cornerDistance <= Math.pow(snack.radius, 2)) {
+                snack.collected = true;
+                gameState.score += 10;
+                
+                // Show collection animation
+                if (typeof onSnackCollected === 'function') {
+                    onSnackCollected(snack);
+                }
+                
+                console.log(`Snack collected! Score: ${gameState.score}`);
+                checkLevelCompletion();
+            }
         }
     });
     
     // Check collisions with bombs
     gameState.bombs.forEach(bomb => {
-        if (bomb.active && isColliding(player.boundingBox, bomb.boundingBox)) {
-            bomb.active = false;
-            console.log("BOOM! Bomb hit!");
+        if (bomb.active) {
+            // Simple circle-rectangle collision for better accuracy
+            const circleDistanceX = Math.abs(bomb.x - player.x);
+            const circleDistanceY = Math.abs(bomb.y - (player.y - player.height/2));
             
-            // Handle bomb hit - check if player has lives left
-            handleBombHit(player, gameState);
+            if (circleDistanceX > (player.width/2 + bomb.radius)) { return; }
+            if (circleDistanceY > (player.height/2 + bomb.radius)) { return; }
+            
+            if (circleDistanceX <= (player.width/2) || circleDistanceY <= (player.height/2)) {
+                bomb.active = false;
+                console.log("BOOM! Bomb hit!");
+                
+                // Handle bomb hit - check if player has lives left
+                if (uiState.healthPoints > 1) {
+                    // Player still has more than one life, restart level
+                    uiState.healthPoints--;
+                    addNotification(`Life lost! ${uiState.healthPoints} remaining.`);
+                    
+                    // Reload the current level
+                    loadLevel(gameState.currentLevel);
+                } else {
+                    // Last life - game over
+                    uiState.healthPoints = 0;
+                    gameState.gameOver = true;
+                    player.color = '#7f8c8d'; // Change player color to indicate death
+                }
+                return;
+            }
+            
+            const cornerDistance = Math.pow(circleDistanceX - player.width/2, 2) +
+                                 Math.pow(circleDistanceY - player.height/2, 2);
+            
+            if (cornerDistance <= Math.pow(bomb.radius, 2)) {
+                bomb.active = false;
+                console.log("BOOM! Bomb hit!");
+                
+                // Handle bomb hit - check if player has lives left
+                if (uiState.healthPoints > 1) {
+                    // Player still has more than one life, restart level
+                    uiState.healthPoints--;
+                    addNotification(`Life lost! ${uiState.healthPoints} remaining.`);
+                    
+                    // Reload the current level
+                    loadLevel(gameState.currentLevel);
+                } else {
+                    // Last life - game over
+                    uiState.healthPoints = 0;
+                    gameState.gameOver = true;
+                    player.color = '#7f8c8d'; // Change player color to indicate death
+                }
+            }
         }
     });
-}
-
-// Handle bomb hit with proper life loss
-function handleBombHit(player, gameState) {
-    if (uiState.healthPoints > 1) {
-        // Player still has more than one life, restart level
-        uiState.healthPoints--;
-        addNotification(`Life lost! ${uiState.healthPoints} remaining.`);
-        
-        // Reload the current level
-        loadLevel(gameState.currentLevel);
-    } else {
-        // Last life - game over
-        uiState.healthPoints = 0;
-        gameState.gameOver = true;
-        player.color = '#7f8c8d'; // Change player color to indicate death
-    }
 }
 
 // Check if level is complete
@@ -76,15 +145,12 @@ function checkLevelCompletion() {
     const gameState = window.gameState;
     const remainingSnacks = gameState.snacks.filter(snack => !snack.collected).length;
     
-    console.log(`Checking level completion: ${remainingSnacks} snacks remaining`);
-    
-    if (remainingSnacks === 0 && !gameState.levelComplete) {
-        console.log("All snacks collected - level complete!");
+    if (remainingSnacks === 0) {
         gameState.levelComplete = true;
         
         // Award coins - now uses the level-specific reward amount
         const coinReward = gameState.levelCoinReward || 5;
-        gameState.totalCoins += coinReward; // Use direct coins addition for simplicity
+        gameState.awardCoins(coinReward);
         
         // Show coin animation
         if (typeof onCoinsEarned === 'function') {
@@ -97,9 +163,8 @@ function checkLevelCompletion() {
         // Record the time when level was completed
         levelCompleteTime = Date.now();
         
-        // Force progress to next level after a delay
+        // Use new progression system for level transition
         setTimeout(() => {
-            console.log("Calling progressToNextLevel after delay");
             progressToNextLevel();
         }, 2000); // Wait 2 seconds before transitioning to next level
     }

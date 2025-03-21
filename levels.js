@@ -2,7 +2,6 @@
 import { setLevel, startLevelTransition } from './levelProgression.js';
 import { resetLevelCountdown } from './renderer.js';
 import { resetLives } from './ui.js';
-import { startNewLevel } from './game.js';
 
 // Get random snack color (utility function)
 function getRandomSnackColor() {
@@ -175,10 +174,6 @@ export const levels = [
         ],
         bombSpawnPoints: [
             // Along the path 
-            { x: 300, y: 520 },
-            { x: 450, y: 470 },
-            { x: 450, y: 420 },
-            { x: 300, y: 370 },
             { x: 300, y: 320 },
             { x: 450, y: 270 },
             { x: 450, y: 220 },
@@ -193,9 +188,6 @@ export const levels = [
         coinReward: 12
     }
 ];
-
-// Make levels available globally
-window.gameLevels = levels;
 
 // Load level
 export function loadLevel(levelNumber) {
@@ -384,29 +376,15 @@ export function loadLevel(levelNumber) {
 // Progress to the next level with transition
 export function progressToNextLevel() {
     const gameState = window.gameState;
-    
-    // Prevent duplicate calls by checking if already in transition
-    if (gameState.inTransition) {
-        console.log("Already in transition, ignoring duplicate call");
-        return;
-    }
-    
-    console.log(`Level complete! Moving from level ${gameState.currentLevel} to level ${gameState.currentLevel + 1}`);
-    gameState.inTransition = true;
-    
     const currentLevel = gameState.currentLevel;
     const nextLevel = currentLevel + 1;
     
     // Call transition effect from progression system
     startLevelTransition(currentLevel, nextLevel, () => {
         // This function will be called during the transition
-        console.log(`Starting new level: ${nextLevel}`);
         startNewLevel(nextLevel);
-        
-        // Clear the transition flag after a delay
-        setTimeout(() => {
-            gameState.inTransition = false;
-            console.log("Transition flag cleared");
-        }, 1000);
     });
 }
+
+// Import for circular reference after defining other functions
+import { startNewLevel } from './game.js';

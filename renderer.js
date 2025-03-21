@@ -1,12 +1,30 @@
-// Rendering functions for game objects and UI
-import { progressionState } from './levelProgression.js';
+// Rendering and drawing functions
+import { levels } from './levels.js';
 import { shopState } from './shop.js';
-import { uiState } from './ui.js';
-import { isGamePaused } from './controls.js';
+import { 
+    drawEnhancedStatusBar, 
+    drawLivesIndicator, 
+    drawUIAnimations, 
+    updateUIAnimations,
+    drawGameOverScreen,
+    drawLevelCompleteScreen,
+    drawTutorialOverlay,
+    addScoreAnimation,
+    addCoinAnimation,
+    addNotification,
+    startFade,
+    loseLife,
+    resetLives,
+    uiState
+} from './ui.js';
 
-// Timer variables for level transition
-let lastCountdownTime = 0;
+// Add a counter for level transition countdown
 let levelTransitionCountdown = 3;
+let lastCountdownTime = 0;
+
+// Track time elapsed in current level
+let levelStartTime = 0;
+let levelElapsedTime = 0;
 
 // Draw background grid
 export function drawGrid(ctx, canvas) {
@@ -31,20 +49,25 @@ export function drawGrid(ctx, canvas) {
     }
 }
 
-// Draw game objects (snacks, bombs, platforms)
+// Draw game objects
 export function drawGameObjects(ctx) {
     const gameState = window.gameState;
     
     // Draw platforms
     gameState.platforms.forEach(platform => {
-        // Draw platform
-        ctx.fillStyle = platform.color || '#8e44ad';
+        ctx.fillStyle = platform.color;
         ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
         
-        // Draw platform outline
-        ctx.strokeStyle = '#663399';
+        // Draw platform edges
+        ctx.strokeStyle = '#6c3483';
         ctx.lineWidth = 2;
         ctx.strokeRect(platform.x, platform.y, platform.width, platform.height);
+        
+        // Draw platform texture
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        for (let i = platform.x + 10; i < platform.x + platform.width; i += 20) {
+            ctx.fillRect(i, platform.y + 5, 10, 2);
+        }
     });
     
     // Draw snacks
@@ -65,6 +88,18 @@ export function drawGameObjects(ctx) {
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
             ctx.lineWidth = 2;
             ctx.stroke();
+            
+            // Draw bounding box for debugging if needed
+            if (false) { // Set to true to see collision boxes
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(
+                    snack.boundingBox.left,
+                    snack.boundingBox.top,
+                    snack.boundingBox.right - snack.boundingBox.left,
+                    snack.boundingBox.bottom - snack.boundingBox.top
+                );
+            }
         }
     });
     
@@ -90,6 +125,18 @@ export function drawGameObjects(ctx) {
             ctx.arc(bomb.x + bomb.radius/3, bomb.y - bomb.radius/3, bomb.radius/5, 0, Math.PI * 2);
             ctx.fillStyle = 'white';
             ctx.fill();
+            
+            // Draw bounding box for debugging if needed
+            if (false) { // Set to true to see collision boxes
+                ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(
+                    bomb.boundingBox.left,
+                    bomb.boundingBox.top,
+                    bomb.boundingBox.right - bomb.boundingBox.left,
+                    bomb.boundingBox.bottom - bomb.boundingBox.top
+                );
+            }
         }
     });
 }
@@ -131,144 +178,133 @@ export function drawPlayer(ctx) {
         ctx.stroke();
     }
     
-    // Debug: draw bounding box
-    if (window.DEBUG_MODE) {
-        const box = player.boundingBox;
+    // Draw bounding box for debugging if needed
+    if (false) { // Set to true to see collision boxes
         ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
         ctx.lineWidth = 1;
-        ctx.strokeRect(box.left, box.top, box.right - box.left, box.bottom - box.top);
+        ctx.strokeRect(
+            player.boundingBox.left,
+            player.boundingBox.top,
+            player.boundingBox.right - player.boundingBox.left,
+            player.boundingBox.bottom - player.boundingBox.top
+        );
     }
 }
 
-// Draw status information
+// Draw status information (REPLACED with enhanced status bar)
 export function drawStatus(ctx) {
     const gameState = window.gameState;
+    const canvas = ctx.canvas;
     
-    // Draw score
-    ctx.fillStyle = 'black';
-    ctx.font = 'bold 20px Arial';
-    ctx.textAlign = 'left';
-    ctx.fillText(`Score: ${gameState.score}`, 10, 30);
+    // Draw enhanced status bar
+    drawEnhancedStatusBar(ctx, gameState, canvas);
     
-    // Draw snacks remaining
-    const remainingSnacks = gameState.snacks.filter(snack => !snack.collected).length;
-    ctx.fillText(`Snacks: ${remainingSnacks}/${gameState.snacks.length}`, 10, 60);
-    
-    // Draw bombs remaining
-    const remainingBombs = gameState.bombs.filter(bomb => bomb.active).length;
-    ctx.fillText(`Bombs: ${remainingBombs}`, 10, 90);
-    
-    // Draw level
-    ctx.fillText(`Level: ${gameState.currentLevel}`, 10, 120);
-    
-    // Draw coins
-    ctx.fillStyle = '#f1c40f';
-    ctx.fillText(`Coins: ${gameState.totalCoins}`, 10, 150);
-    
-    // Draw debug info
-    const player = gameState.player;
-    ctx.font = '16px Arial';
-    ctx.fillStyle = 'black';
-    ctx.fillText(`Position: (${Math.round(player.x)}, ${Math.round(player.y)})`, 580, 30);
-    ctx.fillText(`On Ground: ${player.isOnGround}`, 580, 60);
-    ctx.fillText(`Jumping: ${player.isJumping}`, 580, 90);
-    
-    // Draw pause indicator if game is paused
-    if (isGamePaused()) {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(350, 10, 100, 30);
-        ctx.fillStyle = 'white';
-        ctx.textAlign = 'center';
-        ctx.fillText('PAUSED', 400, 30);
-    }
+    // Draw lives indicator
+    drawLivesIndicator(ctx);
 }
 
-// Draw game instructions or game over message
+// Draw game instructions or messages
 export function drawGameMessages(ctx, canvas) {
     const gameState = window.gameState;
     
     // Don't draw messages if shop is open or tutorial is showing
     if (shopState.isOpen || uiState.showTutorial) return;
     
-    // Draw instruction banner
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    ctx.fillRect(200, 10, 400, 30);
-    
-    ctx.fillStyle = 'white';
-    ctx.font = '16px Arial';
-    ctx.textAlign = 'center';
-    
     if (gameState.gameOver) {
-        ctx.fillText('GAME OVER! Press R to restart', 400, 30);
-        
-        // Draw larger game over message in center
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(250, 250, 300, 100);
-        
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 36px Arial';
-        ctx.fillText('GAME OVER', 400, 300);
-        
-        ctx.font = '20px Arial';
-        ctx.fillText(`Final Score: ${gameState.score}`, 400, 330);
+        // Draw enhanced game over screen
+        drawGameOverScreen(ctx, gameState.score, canvas);
     } else if (gameState.levelComplete) {
-        ctx.fillText('Level Complete! Next level loading...', 400, 30);
+        // Handle countdown timer
+        const currentTime = Date.now();
         
-        // Handle countdown timer - but only if not in level transition
-        if (!progressionState.inTransition) {
-            const currentTime = Date.now();
-            
-            // Initialize the countdown when level first completes
-            if (lastCountdownTime === 0) {
-                lastCountdownTime = currentTime;
-                levelTransitionCountdown = 3;
-                console.log("Level transition countdown started");
-            }
-            
-            // Update the countdown every second
-            if (currentTime - lastCountdownTime >= 1000) {
-                levelTransitionCountdown--;
-                lastCountdownTime = currentTime;
-                console.log(`Level transition countdown: ${levelTransitionCountdown}`);
-                
-                // Ensure countdown never goes below 1
-                if (levelTransitionCountdown < 1) {
-                    levelTransitionCountdown = 1; // Keep it at 1 until the level actually changes
-                }
-            }
-            
-            // Draw level complete message
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(250, 250, 300, 100);
-            
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 24px Arial';
-            ctx.fillText('LEVEL COMPLETE!', 400, 290);
-            
-            ctx.font = '20px Arial';
-            ctx.fillText(`Next level in ${levelTransitionCountdown}...`, 400, 330);
+        // Initialize the countdown when level first completes
+        if (lastCountdownTime === 0) {
+            lastCountdownTime = currentTime;
+            levelTransitionCountdown = 3;
         }
-    } else {
-        ctx.fillText('Collect all snacks! Avoid bombs!', 400, 30);
+        
+        // Update the countdown every second
+        if (currentTime - lastCountdownTime >= 1000) {
+            levelTransitionCountdown--;
+            lastCountdownTime = currentTime;
+            
+            // Ensure countdown never goes below 1
+            if (levelTransitionCountdown < 1) {
+                levelTransitionCountdown = 1; // Keep it at 1 until the level actually changes
+            }
+        }
+        
+        // Draw enhanced level complete screen
+        drawLevelCompleteScreen(ctx, gameState.currentLevel, gameState.score, levelTransitionCountdown, canvas);
+    }
+    
+    // Draw UI animations (score popups, coin animations, etc.)
+    drawUIAnimations(ctx);
+    
+    // Draw tutorial overlay if active
+    drawTutorialOverlay(ctx, canvas);
+}
+
+// Reset countdown (called when starting a new level)
+export function resetLevelCountdown() {
+    levelTransitionCountdown = 3;
+    lastCountdownTime = 0;
+    levelStartTime = Date.now();
+    levelElapsedTime = 0;
+    
+    // Reset lives at the start of the game (level 1)
+    if (window.gameState.currentLevel === 1) {
+        resetLives();
+    }
+    
+    // Add notification
+    addNotification(`Level ${window.gameState.currentLevel} Started!`);
+}
+
+// Update UI animations and effects
+export function updateUI(deltaTime) {
+    updateUIAnimations(deltaTime);
+    
+    // Update level elapsed time
+    if (levelStartTime > 0 && !window.gameState.gameOver && !window.gameState.levelComplete) {
+        levelElapsedTime = (Date.now() - levelStartTime) / 1000; // in seconds
     }
 }
 
-// Reset level transition countdown
-export function resetLevelCountdown() {
-    console.log("Resetting level countdown");
-    lastCountdownTime = 0;
-    levelTransitionCountdown = 3;
-}
-
-// Event handlers for collectible animations
+// Called when a snack is collected
 export function onSnackCollected(snack) {
-    // Add visual effects when snack is collected
-    // This would be expanded in the full game
-    console.log("Snack collected at", snack.x, snack.y);
+    // Add score animation at snack position
+    addScoreAnimation(snack.x, snack.y, 10);
 }
 
+// Called when coins are earned
 export function onCoinsEarned(amount, x, y) {
-    // Add visual effects when coins are earned
-    // This would be expanded in the full game
-    console.log(`${amount} coins earned at (${x}, ${y})`);
+    // Add coin animation
+    for (let i = 0; i < amount; i++) {
+        // Stagger the coin animations slightly
+        setTimeout(() => {
+            addCoinAnimation(x, y);
+        }, i * 100);
+    }
+    
+    // Add notification
+    addNotification(`+${amount} coins earned!`);
+}
+
+// Called when player hits a bomb
+export function onBombHit() {
+    // Check if player still has lives left
+    if (loseLife()) {
+        // Player still has lives, restart level
+        startFade('out', 500, () => {
+            // Reset level but don't reset lives
+            window.gameState.reset();
+            
+            // Fade back in
+            startFade('in', 500);
+        });
+    } else {
+        // Game over
+        window.gameState.gameOver = true;
+    }
 }

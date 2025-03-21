@@ -3,7 +3,6 @@ import { loadLevel } from './levels.js';
 import { toggleShop, handleShopClick, shopState } from './shop.js';
 import { toggleTutorial, uiState, addNotification } from './ui.js';
 import { resetLevelCountdown } from './renderer.js';
-import { startNewLevel } from './game.js';
 
 // Track if the game is paused
 let gamePaused = false;
@@ -12,8 +11,9 @@ let gameInitialized = false;
 // Handler for keydown events
 export function handleKeyDown(e) {
     const gameState = window.gameState;
+    console.log("Key pressed:", e.key);  // Debug log
     
-    // Handler for tutorial closing with any key
+    // Handle tutorial closing with any key
     if (uiState.showTutorial) {
         toggleTutorial();
         
@@ -21,11 +21,7 @@ export function handleKeyDown(e) {
         if (!gameInitialized) {
             console.log("Initializing game after tutorial closed");
             gameInitialized = true;
-            setTimeout(() => {
-                // Use setTimeout to ensure UI state is updated before loading level
-                loadLevel(1);
-                resetLevelCountdown();
-            }, 100);
+            startNewLevel(1);
         }
         return;
     }
@@ -107,6 +103,7 @@ export function handleKeyDown(e) {
 // Handler for keyup events
 export function handleKeyUp(e) {
     const gameState = window.gameState;
+    console.log("Key released:", e.key);  // Debug log
     
     // Don't process keys if in tutorial
     if (uiState.showTutorial) {
@@ -134,6 +131,8 @@ export function handleClick(e) {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
     
+    console.log("Click at:", x, y);  // Debug log
+    
     // Handle tutorial closing with click
     if (uiState.showTutorial) {
         toggleTutorial();
@@ -142,18 +141,14 @@ export function handleClick(e) {
         if (!gameInitialized) {
             console.log("Initializing game after tutorial closed");
             gameInitialized = true;
-            setTimeout(() => {
-                // Use setTimeout to ensure UI state is updated before loading level
-                loadLevel(1);
-                resetLevelCountdown();
-            }, 100);
+            startNewLevel(1);
         }
         return;
     }
     
     // Handle shop clicks if shop is open
     if (shopState.isOpen) {
-        handleShopClick(x, y);
+        handleShopClick(x, y, canvas);
     }
     
     // If game is paused, unpause it
@@ -236,3 +231,6 @@ export function completeGameReset() {
     // Load the first level
     startNewLevel(1);
 }
+
+// Import after defining functions to avoid circular reference
+import { startNewLevel } from './game.js';

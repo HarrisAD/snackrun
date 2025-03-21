@@ -10,7 +10,6 @@ export class GameState {
         this.gameOver = false;
         this.levelComplete = false;
         this.currentLevel = 1;
-        this.inTransition = false; // Add flag to track transitions
         this.player = {
             x: 400,
             y: 500,
@@ -46,9 +45,6 @@ export class GameState {
         // Store canvas dimensions for easy access
         this.canvasWidth = canvas.width;
         this.canvasHeight = canvas.height;
-        
-        // Debug mode flag
-        this.debugMode = false;
     }
     
     // Reset the game state for a new level
@@ -63,9 +59,11 @@ export class GameState {
         this.player.speedX = 0;
         this.player.speedY = 0;
         this.player.color = '#e74c3c';
-        this.inTransition = false; // Reset transition flag
+    }
+    
+    // Award coins for level completion
+    awardCoins(amount) {
+        this.totalCoins += amount;
+        console.log(`Awarded ${amount} coins. Total: ${this.totalCoins}`);
     }
 }
-
-// Allow toggling debug mode globally
-window.DEBUG_MODE = false;
