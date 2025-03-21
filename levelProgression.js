@@ -1,34 +1,22 @@
-// Handle level transition effects
-export function startLevelTransition(fromLevel, toLevel, callback) {
-    // Prevent duplicate transitions
-    if (progressionState.inTransition) {
-        console.log("Transition already in progress, ignoring duplicate");
-        return;
-    }
+// Game progression state
+export const progressionState = {
+    // Overall player progression
+    totalScore: 0,
+    highestLevelReached: 1,
+    totalSnacksCollected: 0,
+    totalCoinsEarned: 0,
     
-    progressionState.inTransition = true;
-    progressionState.transitionProgress = 0;
+    // Difficulty scaling factors
+    difficultyMultiplier: 1.0, // Increases as player progresses
+    bombSpawnRate: 1.0, // Rate at which bombs spawn
     
-    // Save level stats before transition
-    saveLevelStats(fromLevel);
+    // Level transition
+    inTransition: false,
+    transitionProgress: 0,
     
-    // Show notification
-    addNotification(`Level ${fromLevel} completed! Moving to Level ${toLevel}...`);
+    // Dynamic level generation
+    dynamicLevelMode: false, // Activates after pre-designed levels are completed
     
-    // Fade out, then fade in with callback
-    startFade('out', 500, () => {
-        if (callback) callback();
-        
-        // After a brief pause, fade back in
-        setTimeout(() => {
-            startFade('in', 500, () => {
-                progressionState.inTransition = false;
-                
-                // Show difficulty increase notification on significant changes
-                if (toLevel > 3 && toLevel % 3 === 1) {
-                    addNotification(`Difficulty increased! Be careful!`, 5000);
-                }
-            });
-        }, 300);
-    });
-}
+    // Storage settings
+    useLocalStorage: false  // Completely disabled to avoid errors
+};

@@ -14,7 +14,7 @@ export function handleKeyDown(e) {
     const gameState = window.gameState;
     console.log("Key pressed:", e.key);  // Debug log
     
-    // Handle tutorial closing with any key
+    // Handler for tutorial closing with any key
     if (uiState.showTutorial) {
         toggleTutorial();
         
@@ -22,7 +22,11 @@ export function handleKeyDown(e) {
         if (!gameInitialized) {
             console.log("Initializing game after tutorial closed");
             gameInitialized = true;
-            startNewLevel(1);
+            setTimeout(() => {
+                // Use setTimeout to ensure UI state is updated before loading level
+                loadLevel(1);
+                resetLevelCountdown();
+            }, 100);
         }
         return;
     }
@@ -142,7 +146,11 @@ export function handleClick(e) {
         if (!gameInitialized) {
             console.log("Initializing game after tutorial closed");
             gameInitialized = true;
-            startNewLevel(1);
+            setTimeout(() => {
+                // Use setTimeout to ensure UI state is updated before loading level
+                loadLevel(1);
+                resetLevelCountdown();
+            }, 100);
         }
         return;
     }
