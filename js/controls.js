@@ -21,7 +21,6 @@ export function handleKeyDown(e) {
         if (!gameInitialized) {
             console.log("Initializing game after tutorial closed");
             gameInitialized = true;
-            startNewLevel(1);
         }
         return;
     }
