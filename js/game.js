@@ -57,17 +57,9 @@ window.onload = function() {
     toggleTutorial();
   
     // Start the game when tutorial is closed
-    if (!window.gameInitialized) {
-        window.gameInitialized = true;
-        
-        // Load the first level after a slight delay
-        setTimeout(() => {
-            // Only load the level if the tutorial is closed
-            if (!uiState.showTutorial) {
-                startNewLevel(1);
-            }
-        }, 500);
-    }
+    window.addEventListener('tutorialClosed', function() {
+        startNewLevel(1);
+    });
 
     // Show an initial instruction to click the canvas
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';

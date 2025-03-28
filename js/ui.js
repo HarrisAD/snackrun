@@ -655,5 +655,11 @@ export function drawTutorialOverlay(ctx, canvas) {
 
 // Toggle tutorial visibility
 export function toggleTutorial() {
+    const wasTutorialShowing = uiState.showTutorial;
     uiState.showTutorial = !uiState.showTutorial;
+    
+    // If tutorial was closed, dispatch an event
+    if (wasTutorialShowing && !uiState.showTutorial) {
+        window.dispatchEvent(new Event('tutorialClosed'));
+    }
 }

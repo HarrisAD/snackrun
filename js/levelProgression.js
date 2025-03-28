@@ -365,6 +365,12 @@ function updateDifficulty(levelNumber) {
 
 // Handle level transition effects
 export function startLevelTransition(fromLevel, toLevel, callback) {
+    
+    if (progressionState.inTransition) {
+        console.log("Transition already in progress, ignoring duplicate call");
+        return;
+    }
+
     progressionState.inTransition = true;
     progressionState.transitionProgress = 0;
     

@@ -379,6 +379,12 @@ export function progressToNextLevel() {
     const currentLevel = gameState.currentLevel;
     const nextLevel = currentLevel + 1;
     
+    // Skip transition if already in transition to avoid double fade
+    if (progressionState.inTransition) {
+        console.log("Already in transition, skipping additional transition");
+        return;
+    }
+
     // Call transition effect from progression system
     startLevelTransition(currentLevel, nextLevel, () => {
         // This function will be called during the transition
