@@ -163,10 +163,6 @@ function checkLevelCompletion() {
         // Record the time when level was completed
         levelCompleteTime = Date.now();
         
-        // Use new progression system for level transition
-        setTimeout(() => {
-            progressToNextLevel();
-        }, 2000); // Wait 2 seconds before transitioning to next level
     }
 }
 

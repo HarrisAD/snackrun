@@ -228,9 +228,19 @@ export function drawGameMessages(ctx, canvas) {
             levelTransitionCountdown--;
             lastCountdownTime = currentTime;
             
-            // Ensure countdown never goes below 1
-            if (levelTransitionCountdown < 1) {
-                levelTransitionCountdown = 1; // Keep it at 1 until the level actually changes
+            if (levelTransitionCountdown <= 0) {
+                // Call progressToNextLevel when countdown is done
+                // This ensures transition happens exactly when countdown reaches zero
+                if (!window.transitionTriggered) {
+                    window.transitionTriggered = true;
+                    // Import the function to avoid circular references
+                    import('./levels.js').then(module => {
+                        module.progressToNextLevel();
+                    });
+                }
+                
+                // Keep it at 0
+                levelTransitionCountdown = 0;
             }
         }
         
