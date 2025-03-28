@@ -57,21 +57,18 @@ window.onload = function() {
     toggleTutorial();
   
     // Start the game when tutorial is closed
-let gameStarted = false;
-
-// Modify the gameLoop function to check if the game should start
-function gameLoop(timestamp) {
-    // Add this near the beginning of the gameLoop function:
-    
-    // Check if we should start the game after tutorial closes
-    if (!gameStarted && !uiState.showTutorial) {
-        console.log("Starting game after tutorial closed");
-        gameStarted = true;
-        startNewLevel(1);
+    if (!window.gameInitialized) {
+        window.gameInitialized = true;
+        
+        // Load the first level after a slight delay
+        setTimeout(() => {
+            // Only load the level if the tutorial is closed
+            if (!uiState.showTutorial) {
+                startNewLevel(1);
+            }
+        }, 500);
     }
-    
-    // Rest of your gameLoop code...
-}  
+
     // Show an initial instruction to click the canvas
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(250, 250, 300, 100);
